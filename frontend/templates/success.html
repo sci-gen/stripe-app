@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支払い完了 - Stripe単発購入</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+</head>
+<body>
+    <div class="container success">
+        <h1>支払いが完了しました！</h1>
+        <div class="success-message">
+            <p>ありがとうございます。お支払いが正常に処理されました。</p>
+            {% if session %}
+            <div class="session-details">
+                <p><strong>セッションID:</strong> {{ session.id }}</p>
+                <p><strong>支払い状況:</strong> {{ session.payment_status }}</p>
+                <p><strong>金額:</strong> {{ session.amount_total / 100 }}円</p>
+            </div>
+            {% endif %}
+        </div>
+        <a href="/" class="btn primary">トップに戻る</a>
+    </div>
+</body>
+</html>
