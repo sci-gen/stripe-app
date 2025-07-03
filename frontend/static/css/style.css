@@ -149,16 +149,58 @@ input[type="text"] {
     border-radius: 4px;
 }
 
+.info-message {
+    background-color: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #bbdefb;
+}
+
+.success-section {
+    background-color: #f8f9fa;
+    padding: 30px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.session-details {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.session-details h3 {
+    margin-top: 0;
+    color: #28a745;
+}
+
+.session-details p {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+.session-details strong {
+    color: #495057;
+}
+
+.info-card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    margin: 20px 0;
+}
+
 /* レスポンシブ対応 */
 @media (max-width: 600px) {
     .container {
         padding: 20px;
     }
-    
+
     .buttons {
         flex-direction: column;
     }
-    
+
     .btn {
         width: 100%;
         margin-bottom: 10px;

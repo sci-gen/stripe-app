@@ -29,15 +29,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
         // Stripe設定を取得
         await loadStripeConfig();
-        
+
         // Stripeインスタンスを初期化
         stripe = Stripe(stripeConfig.publishable_key);
-        
+
         // イベントリスナーを設定
         setupEventListeners();
-        
+
         showMessage('システムが正常に初期化されました', 'success');
-        
+
     } catch (error) {
         console.error('初期化エラー:', error);
         showMessage('システムの初期化に失敗しました', 'error');
@@ -50,13 +50,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 async function loadStripeConfig() {
     try {
         const response = await fetch(`${APP_CONFIG.API_BASE_URL}/api/config`);
-        
+
         if (!response.ok) {
             throw new Error('設定の取得に失敗しました');
         }
-        
+
         stripeConfig = await response.json();
-        
+
     } catch (error) {
         console.error('設定取得エラー:', error);
         throw error;
@@ -69,16 +69,16 @@ async function loadStripeConfig() {
 function setupEventListeners() {
     // Stripe決済ボタン
     elements.checkoutButton?.addEventListener('click', handleCheckout);
-    
+
     // 請求書発行ボタン
     elements.invoiceButton?.addEventListener('click', toggleInvoiceForm);
-    
+
     // 請求書作成ボタン
     elements.createInvoiceButton?.addEventListener('click', handleCreateInvoice);
-    
+
     // キャンセルボタン
     elements.cancelInvoiceButton?.addEventListener('click', hideInvoiceForm);
-    
+
     // Enterキーでの送信
     elements.amountInput?.addEventListener('keypress', function(event) {
         if (event.key === 'Enter') {
@@ -94,20 +94,20 @@ async function handleCheckout() {
     try {
         const amount = parseInt(elements.amountInput.value);
         const productName = elements.productNameInput.value;
-        
+
         // バリデーション
         if (!validateAmount(amount)) {
             showMessage('金額は100円以上で入力してください', 'error');
             return;
         }
-        
+
         if (!productName.trim()) {
             showMessage('商品名を入力してください', 'error');
             return;
         }
-        
+
         showLoading(true);
-        
+
         // チェックアウトセッションの作成
         const response = await fetch(`${APP_CONFIG.API_BASE_URL}/api/create-checkout-session`, {
             method: 'POST',
@@ -120,22 +120,22 @@ async function handleCheckout() {
                 currency: 'jpy'
             }),
         });
-        
+
         const data = await response.json();
-        
+
         if (!response.ok) {
             throw new Error(data.detail || '決済セッションの作成に失敗しました');
         }
-        
+
         // Stripe Checkoutにリダイレクト
         const result = await stripe.redirectToCheckout({
             sessionId: data.session_id
         });
-        
+
         if (result.error) {
             throw new Error(result.error.message);
         }
-        
+
     } catch (error) {
         console.error('決済エラー:', error);
         showMessage(`決済エラー: ${error.message}`, 'error');
@@ -171,25 +171,25 @@ async function handleCreateInvoice() {
         const amount = parseInt(elements.amountInput.value);
         const email = elements.emailInput.value;
         const description = elements.descriptionInput.value;
-        
+
         // バリデーション
         if (!validateAmount(amount)) {
             showMessage('金額は100円以上で入力してください', 'error');
             return;
         }
-        
+
         if (!validateEmail(email)) {
             showMessage('有効なメールアドレスを入力してください', 'error');
             return;
         }
-        
+
         if (!description.trim()) {
             showMessage('説明を入力してください', 'error');
             return;
         }
-        
+
         showLoading(true);
-        
+
         // 請求書作成のリクエスト
         const response = await fetch(`${APP_CONFIG.API_BASE_URL}/api/create-invoice`, {
             method: 'POST',
@@ -203,24 +203,24 @@ async function handleCreateInvoice() {
                 currency: 'jpy'
             }),
         });
-        
+
         const data = await response.json();
-        
+
         if (!response.ok) {
             throw new Error(data.detail || '請求書の作成に失敗しました');
         }
-        
+
         // 成功メッセージと請求書URLの表示
         showMessage('請求書が正常に作成されました！', 'success');
-        
+
         // 請求書URLがある場合は新しいタブで開く
         if (data.invoice_url) {
             window.open(data.invoice_url, '_blank');
         }
-        
+
         // フォームをリセット
         hideInvoiceForm();
-        
+
     } catch (error) {
         console.error('請求書作成エラー:', error);
         showMessage(`請求書作成エラー: ${error.message}`, 'error');
@@ -249,7 +249,7 @@ function showMessage(message, type) {
         elements.messageDiv.textContent = message;
         elements.messageDiv.className = `message ${type === 'error' ? 'error-message' : 'success-message'}`;
         elements.messageDiv.classList.remove('hidden');
-        
+
         // 5秒後に非表示
         setTimeout(() => {
             hideMessage();

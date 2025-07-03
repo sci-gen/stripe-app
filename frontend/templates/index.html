@@ -3,46 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stripe単発購入</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <title>Stripe決済システム</title>
+    <link rel="stylesheet" href="../static/css/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Stripe単発購入デモ</h1>
-        
+        <h1>Stripe決済システム</h1>
+
         <div class="payment-section">
-            <h2>購入金額を入力</h2>
+            <h2>決済情報を入力</h2>
             <div class="form-group">
                 <label for="amount">金額（円）:</label>
                 <input type="number" id="amount" min="100" value="1000" step="100">
             </div>
-            
+            <div class="form-group">
+                <label for="product-name">商品名:</label>
+                <input type="text" id="product-name" value="単発購入" placeholder="商品またはサービス名">
+            </div>
+
             <div class="buttons">
-                <button id="checkout-button" class="btn primary">Stripeで支払う</button>
-                <button id="invoice-button" class="btn secondary">請求書を発行する</button>
+                <button id="checkout-button" class="btn primary">Stripe決済</button>
+                <button id="invoice-button" class="btn secondary">請求書発行</button>
             </div>
         </div>
-        
-        <div id="invoice-form" class="hidden">
+
+        <div id="invoice-form" class="invoice-form hidden">
             <h2>請求書情報</h2>
             <div class="form-group">
                 <label for="email">メールアドレス:</label>
-                <input type="email" id="email" placeholder="example@example.com">
+                <input type="email" id="email" placeholder="customer@example.com" required>
             </div>
             <div class="form-group">
                 <label for="description">説明:</label>
                 <input type="text" id="description" placeholder="商品またはサービスの説明">
             </div>
-            <button id="create-invoice" class="btn primary">請求書を作成</button>
+            <div class="buttons">
+                <button id="create-invoice" class="btn primary">請求書作成</button>
+                <button id="cancel-invoice" class="btn secondary">キャンセル</button>
+            </div>
         </div>
-        
+
         <div id="message" class="message hidden"></div>
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>処理中...</p>
+        </div>
     </div>
-    
+
+    <!-- 設定ファイルの読み込み -->
+    <script src="../config.js"></script>
+
+    <!-- Stripe JavaScript -->
     <script src="https://js.stripe.com/v3/"></script>
-    <script>
-        const stripe = Stripe('{{ key }}');
-    </script>
-    <script src="{{ url_for('static', path='/js/payment.js') }}"></script>
+
+    <!-- メインスクリプト -->
+    <script src="../static/js/payment.js"></script>
 </body>
 </html>
