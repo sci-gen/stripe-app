@@ -10,22 +10,42 @@
 
 ```
 stripe/
-├── backend/                 # APIサーバー
-│   ├── main.py             # FastAPI アプリケーション
-│   ├── config.py           # 設定管理
-│   ├── requirements.txt    # Python依存関係
-│   └── .env               # 環境変数
-├── frontend/               # フロントエンドアプリケーション
-│   ├── index.html         # メインページ
-│   ├── success.html       # 成功ページ
-│   ├── server.py          # 開発用HTTPサーバー
-│   └── static/
-│       ├── css/
-│       │   └── style.css  # スタイルシート
-│       └── js/
-│           ├── config.js  # API設定
-│           ├── payment.js # 決済処理
-│           └── success.js # 成功ページ処理
+├── backend/                    # FastAPI APIサーバー
+│   ├── main.py                # FastAPI アプリケーション
+│   ├── config.py              # 設定管理
+│   ├── requirements.txt       # Python依存関係
+│   ├── Dockerfile            # Docker設定
+│   └── __pycache__/          # Pythonキャッシュ
+├── frontend/                  # React + TypeScript フロントエンド
+│   ├── src/
+│   │   ├── components/       # Reactコンポーネント
+│   │   ├── pages/           # ページコンポーネント
+│   │   │   ├── HomePage.tsx # メイン画面
+│   │   │   └── SuccessPage.tsx # 成功画面
+│   │   ├── services/        # APIサービス
+│   │   │   └── stripeApi.ts # Stripe API連携
+│   │   ├── types/           # TypeScript型定義
+│   │   │   └── stripe.ts    # Stripe関連の型
+│   │   ├── utils/           # ユーティリティ
+│   │   │   └── config.ts    # 設定管理
+│   │   ├── App.tsx          # メインアプリケーション
+│   │   ├── main.tsx         # エントリーポイント
+│   │   └── index.css        # スタイルシート (Tailwind CSS)
+│   ├── index.html           # HTMLテンプレート
+│   ├── package.json         # Node.js依存関係
+│   ├── vite.config.ts       # Vite設定
+│   ├── tailwind.config.js   # Tailwind CSS設定
+│   ├── postcss.config.js    # PostCSS設定
+│   ├── tsconfig.json        # TypeScript設定
+│   └── Dockerfile           # Docker設定
+├── frontend-legacy/          # 旧フロントエンド（バックアップ）
+│   ├── index.html           # メインページ
+│   ├── success.html         # 成功ページ
+│   └── static/              # 静的ファイル
+├── docker-compose.yml       # Docker Compose設定
+├── .env                     # 環境変数
+├── .dockerignore           # Docker除外設定
+└── README.md               # このファイル
 ```
 
 ## 設計原則
@@ -160,24 +180,34 @@ GET /api/health
 
 ### 1. 依存関係のインストール
 
+#### バックエンド (FastAPI)
+
 ```bash
-# バックエンド
 cd backend
 pip install -r requirements.txt
 ```
 
+#### フロントエンド (React + TypeScript)
+
+```bash
+cd frontend
+npm install
+```
+
 ### 2. 環境変数の設定
 
-`.env` ファイルを作成し、Stripe APIキーを設定:
+プロジェクトルートに `.env` ファイルを作成し、Stripe APIキーを設定:
 
-```
+```env
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
 ### 3. アプリケーションの起動
 
-#### バックエンド（APIサーバー）
+#### 開発環境
+
+**バックエンド（APIサーバー）**
 
 ```bash
 cd backend
@@ -187,28 +217,73 @@ python main.py
 - アクセスURL: <http://localhost:8000>
 - API文書: <http://localhost:8000/docs>
 
-#### フロントエンド（Webアプリケーション）
+**フロントエンド（React + Vite）**
 
 ```bash
 cd frontend
-python server.py
+npm run dev
 ```
 
-- アクセスURL: <http://localhost:3000>
+- アクセスURL: <http://localhost:5173> (または利用可能なポート)
 
-## 開発・本番環境の切り替え
+#### Docker環境
 
-### 開発環境
+```bash
+# 開発環境
+docker-compose up --build
 
-- バックエンド: <http://localhost:8000>
-- フロントエンド: <http://localhost:3000>
-- CORS設定: localhost許可
+# 本番環境
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --build
+```
 
-### 本番環境
+### 4. 技術スタック
 
-1. `frontend/static/js/config.js` のAPI URLを変更
-2. `backend/main.py` のCORS設定を本番ドメインに変更
-3. 環境変数でStripeキーを本番用に設定
+#### バックエンド
+- **FastAPI**: 高性能なPython Web API フレームワーク
+- **Stripe Python SDK**: Stripe API連携
+- **Python 3.11+**: プログラミング言語
+- **uvicorn**: ASGIサーバー
+
+#### フロントエンド
+- **React 19**: UIライブラリ
+- **TypeScript**: 型安全なJavaScript
+- **Vite**: 高速なビルドツール
+- **Tailwind CSS**: ユーティリティファーストCSSフレームワーク
+- **React Router**: SPAルーティング
+- **Axios**: HTTP クライアント
+- **React Query**: データフェッチング・キャッシング
+
+#### インフラ
+- **Docker**: コンテナ化
+- **Docker Compose**: マルチコンテナ管理
+
+## 環境設定
+
+### 開発環境設定
+
+- **バックエンド**: <http://localhost:8000>
+- **フロントエンド**: <http://localhost:5173> (Vite)
+- **CORS設定**: localhost 全ポート許可
+- **ホットリロード**: 有効
+
+### 本番環境設定
+
+1. **環境変数の設定**
+   - Stripe本番用APIキーの設定
+   - 本番用データベース設定（必要に応じて）
+
+2. **フロントエンド設定**
+   - `frontend/src/utils/config.ts` の `API_BASE_URL` を本番URLに変更
+
+3. **バックエンド設定**
+   - `backend/main.py` の CORS設定を本番ドメインに変更
+
+4. **Docker本番デプロイ**
+
+   ```bash
+   # 本番用ビルド
+   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+   ```
 
 ## 利点
 

@@ -6,7 +6,13 @@ from typing import Optional
 import stripe
 import os
 import json
+import logging
 from config import STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY
+
+# logging設定
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 # FastAPIアプリケーションの初期化
 app = FastAPI(
@@ -21,6 +27,10 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
         "http://localhost:8080",
         "http://localhost:5000",
         "http://127.0.0.1:5000",
@@ -46,6 +56,7 @@ class InvoiceRequest(BaseModel):
     email: str
     description: str = "単発購入"
     currency: str = "jpy"
+    send_email: bool = True
 
 
 # APIエンドポイント
@@ -90,40 +101,64 @@ async def create_checkout_session(request: CheckoutRequest):
 @app.post("/api/create-invoice")
 async def create_invoice(request: InvoiceRequest):
     """請求書を作成"""
+    logging.info(
+        f"請求書作成リクエストを受信: email={request.email}, amount={request.amount}, send_email={request.send_email}"
+    )
+    # フロントエンドから受け取ったamountの値と型をログに出力して確認
+    logging.info(f"受信した金額 (amount): {request.amount}, 型: {type(request.amount)}")
     try:
         # 顧客の作成または取得
         customers = stripe.Customer.list(email=request.email)
         if customers.data:
             customer = customers.data[0]
+            logging.info(f"既存顧客が見つかりました: id={customer.id}")
         else:
             customer = stripe.Customer.create(
-                email=request.email, description="単発購入の顧客"
+                email=request.email, description=f"Invoice for {request.email}"
             )
+            logging.info(f"新規顧客を作成しました: id={customer.id}")
 
-        # 請求アイテムの作成
+        # 1. まず下書き請求書を作成
+        # collection_method='send_invoice' はStripeがメールを送信することを示す
+        invoice = stripe.Invoice.create(
+            customer=customer.id,
+            collection_method="send_invoice",
+            days_until_due=30,
+        )
+        logging.info(f"下書き請求書を作成しました: id={invoice.id}")
+
+        # 2. 請求アイテムを作成し、下書き請求書に直接紐付ける
         invoice_item = stripe.InvoiceItem.create(
             customer=customer.id,
             amount=request.amount,
             currency=request.currency,
             description=request.description,
+            invoice=invoice.id,  # ここで下書き請求書IDを指定
+        )
+        logging.info(
+            f"請求アイテムを作成し、請求書 {invoice.id} に紐付けました: id={invoice_item.id}"
         )
 
-        # 請求書の作成
-        invoice = stripe.Invoice.create(
-            customer=customer.id,
-            auto_advance=True,
-        )
+        # 3. send_emailフラグに応じて、請求書を送信するか確定のみ行うか分岐
+        if request.send_email:
+            # 請求書を送信 (この処理が請求書を確定し、顧客にメールを送る)
+            final_invoice = stripe.Invoice.send_invoice(invoice.id)
+            logging.info(
+                f"請求書を送信しました: id={final_invoice.id}, status={final_invoice.status}, url={final_invoice.hosted_invoice_url}, amount_due={final_invoice.amount_due}"
+            )
+        else:
+            # 請求書を確定 (メールは送信しない)
+            final_invoice = stripe.Invoice.finalize_invoice(invoice.id)
+            logging.info(
+                f"請求書を確定しました (メール未送信): id={final_invoice.id}, status={final_invoice.status}, url={final_invoice.hosted_invoice_url}, amount_due={final_invoice.amount_due}"
+            )
 
-        # 請求書の確定
-        invoice = stripe.Invoice.finalize_invoice(invoice.id)
+        response_data = {"success": True, "invoice": final_invoice.to_dict()}
+        logging.info(f"レスポンスを返します: invoice_id={final_invoice.id}")
+        return JSONResponse(content=response_data)
 
-        return {
-            "success": True,
-            "invoice_id": invoice.id,
-            "invoice_url": invoice.hosted_invoice_url,
-            "invoice_pdf": invoice.invoice_pdf,
-        }
     except Exception as e:
+        logging.error(f"請求書作成中にエラーが発生: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
 
 
