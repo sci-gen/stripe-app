@@ -48,12 +48,6 @@ const SuccessPage = () => {
             請求書が作成されました
           </h2>
 
-          <p className="text-gray-600 mb-6">
-            {invoice.status_transitions?.sent_at
-              ? "請求書が正常に作成されました。お客様にメールで送信されています。"
-              : "請求書が正常に作成されました。"}
-          </p>
-
           <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
             <h3 className="font-semibold mb-2 text-gray-900">請求書情報</h3>
             <div className="space-y-2 text-sm text-gray-600">
